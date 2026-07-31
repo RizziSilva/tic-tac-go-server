@@ -25,7 +25,10 @@
     "paths": {
       "@modules": ["./src/modules"],
       "@services": ["./src/services"],
-      "@gateways": ["./src/gateways"]
+      "@gateways": ["./src/gateways"],
+      "@entities": ["./src/entities"],
+      "@types": ["./src/types"],
+      "@constants": ["./src/constants"]
     }
   }
 }
