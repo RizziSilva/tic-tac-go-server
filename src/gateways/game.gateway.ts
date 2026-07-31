@@ -1,6 +1,5 @@
 import {
   ConnectedSocket,
-  MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -20,10 +19,5 @@ export class GameGateway {
     const room = this.gameService.createRoom(client.id, false);
     await client.join(room.code);
     client.emit('room_created', room);
-  }
-
-  @SubscribeMessage('message')
-  handleSomething(@MessageBody() message: string) {
-    this.server.emit('message', message);
   }
 }
