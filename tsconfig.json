@@ -28,7 +28,8 @@
       "@gateways": ["./src/gateways"],
       "@entities": ["./src/entities"],
       "@types": ["./src/types"],
-      "@constants": ["./src/constants"]
+      "@constants": ["./src/constants"],
+      "@validators": ["./src/validators"]
     }
   }
 }
