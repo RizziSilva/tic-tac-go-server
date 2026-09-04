@@ -1,5 +1,6 @@
 import {
   ConnectedSocket,
+  MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -19,5 +20,16 @@ export class GameGateway {
     const room = this.gameService.createRoom(client.id, false);
     await client.join(room.code);
     client.emit('room_created', room);
+  }
+
+  @SubscribeMessage('join_room_with_code')
+  async handleJoinRoomWithCode(
+    @ConnectedSocket() client: Socket,
+    @MessageBody('code') code: string,
+  ) {
+    const room = this.gameService.joinRoomWithCode(client.id, code);
+    await client.join(room.code);
+    client.emit('room_joined', room);
+    client.to(room.code).emit('player_joined', room);
   }
 }
