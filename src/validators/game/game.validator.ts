@@ -7,8 +7,6 @@ import { WsException } from '@nestjs/websockets';
 export class GameValidator {
   validateJoinRoomWithCode(room: Room | undefined): asserts room is Room {
     if (!room) throw new WsException('Room not found');
-    if (room.players.length >= MAX_PLAYERS_PER_ROOM) {
-      throw new WsException('Room is full');
-    }
+    if (room.players.length >= MAX_PLAYERS_PER_ROOM) throw new WsException('Room is full');
   }
 }
