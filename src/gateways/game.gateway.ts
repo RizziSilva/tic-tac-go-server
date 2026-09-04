@@ -5,13 +5,14 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
+import { ROOM_STATUS_FINISHED } from '@constants';
 import { GameService } from '@services';
 
 @WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
 export class GameGateway {
   @WebSocketServer()
-  server;
+  server!: Server;
 
   constructor(private readonly gameService: GameService) {}
 
@@ -31,5 +32,16 @@ export class GameGateway {
     await client.join(room.code);
     client.emit('room_joined', room);
     client.to(room.code).emit('player_joined', room);
+  }
+
+  @SubscribeMessage('move')
+  handleMove(@ConnectedSocket() client: Socket, @MessageBody('position') position: number) {
+    const room = this.gameService.move(client.id, position);
+
+    this.server.to(room.code).emit('move_made', room);
+
+    const isGameFinished: boolean = room.status === ROOM_STATUS_FINISHED;
+
+    if (isGameFinished) this.server.to(room.code).emit('game_over', room);
   }
 }

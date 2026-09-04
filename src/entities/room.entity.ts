@@ -1,18 +1,18 @@
 import { PlayerSymbol, RoomStatus } from '@types';
 import { Player } from './player.entity';
-import { MAX_PIECES_PER_PLAYER } from '@constants';
+import { BOARD_SIZE, MAX_PIECES_PER_PLAYER, ROOM_STATUS_WAITING } from '@constants';
 
 export class Room {
   readonly code: string;
   readonly isPublic: boolean;
   readonly maxPiecesPerPlayer: number = MAX_PIECES_PER_PLAYER;
 
-  status: RoomStatus = 'waiting';
+  status: RoomStatus = ROOM_STATUS_WAITING;
   players: Player[] = [];
   moveQueues: Record<PlayerSymbol, number[]> = { X: [], O: [] };
   currentTurn: PlayerSymbol = 'X';
   winner: PlayerSymbol | null = null;
-  board: (PlayerSymbol | null)[] = Array<PlayerSymbol | null>(9).fill(null);
+  board: (PlayerSymbol | null)[] = Array<PlayerSymbol | null>(BOARD_SIZE).fill(null);
 
   constructor(code: string, hostSocketId: string, isPublic: boolean) {
     this.code = code;

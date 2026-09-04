@@ -1,4 +1,6 @@
 import { Room } from '@entities';
+import { PlayerSymbol } from '@types';
+import { ROOM_STATUS_FINISHED, ROOM_STATUS_PLAYING, WINNING_LINES } from '@constants';
 import { GameValidator } from '@validators';
 import { Injectable } from '@nestjs/common';
 
@@ -20,8 +22,46 @@ export class GameService {
 
     room.players.push({ socketId: guestSocketId, symbol: 'O' });
     this.roomsSockets.set(guestSocketId, code);
+    room.status = ROOM_STATUS_PLAYING;
 
     return room;
+  }
+
+  move(playerSocketId: string, position: number): Room {
+    const code: string | undefined = this.roomsSockets.get(playerSocketId);
+    const room: Room | undefined = code ? this.rooms.get(code) : undefined;
+
+    this.gameValidator.validateMove(room, playerSocketId, position);
+
+    const symbol: PlayerSymbol = room.currentTurn;
+
+    this.placePiece(room, symbol, position);
+
+    if (this.hasWon(room, symbol)) {
+      room.winner = symbol;
+      room.status = ROOM_STATUS_FINISHED;
+    } else {
+      room.currentTurn = symbol === 'X' ? 'O' : 'X';
+    }
+
+    return room;
+  }
+
+  private placePiece(room: Room, symbol: PlayerSymbol, position: number) {
+    const queue: number[] = room.moveQueues[symbol];
+
+    queue.push(position);
+    room.board[position] = symbol;
+
+    if (queue.length > room.maxPiecesPerPlayer) {
+      const removed: number = queue.shift() as number;
+
+      room.board[removed] = null;
+    }
+  }
+
+  private hasWon(room: Room, symbol: PlayerSymbol): boolean {
+    return WINNING_LINES.some((line) => line.every((cell) => room.board[cell] === symbol));
   }
 
   private createEmptyRoom(hostSocketId: string, isPublic: boolean) {
