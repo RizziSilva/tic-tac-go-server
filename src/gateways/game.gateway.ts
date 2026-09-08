@@ -6,7 +6,19 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { ROOM_STATUS_FINISHED } from '@constants';
+import {
+  CREATE_ROOM,
+  GAME_OVER,
+  JOIN_ROOM_WITH_CODE,
+  MOVE,
+  MOVE_MADE,
+  PLAYER_JOINED,
+  REJOIN_ROOM,
+  ROOM_CREATED,
+  ROOM_JOINED,
+  ROOM_STATE,
+  ROOM_STATUS_FINISHED,
+} from '@constants';
 import { GameService } from '@services';
 
 @WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
@@ -16,17 +28,17 @@ export class GameGateway {
 
   constructor(private readonly gameService: GameService) {}
 
-  @SubscribeMessage('create_room')
+  @SubscribeMessage(CREATE_ROOM)
   async handleCreateRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody('playerId') playerId: string,
   ) {
     const room = this.gameService.createRoom(playerId, client.id, false);
     await client.join(room.code);
-    client.emit('room_created', room);
+    client.emit(ROOM_CREATED, room);
   }
 
-  @SubscribeMessage('join_room_with_code')
+  @SubscribeMessage(JOIN_ROOM_WITH_CODE)
   async handleJoinRoomWithCode(
     @ConnectedSocket() client: Socket,
     @MessageBody('playerId') playerId: string,
@@ -34,11 +46,11 @@ export class GameGateway {
   ) {
     const room = this.gameService.joinRoomWithCode(playerId, client.id, code);
     await client.join(room.code);
-    client.emit('room_joined', room);
-    client.to(room.code).emit('player_joined', room);
+    client.emit(ROOM_JOINED, room);
+    client.to(room.code).emit(PLAYER_JOINED, room);
   }
 
-  @SubscribeMessage('rejoin_room')
+  @SubscribeMessage(REJOIN_ROOM)
   async handleRejoinRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody('playerId') playerId: string,
@@ -46,17 +58,17 @@ export class GameGateway {
   ) {
     const room = this.gameService.rejoinRoom(playerId, client.id, code);
     await client.join(room.code);
-    client.emit('room_state', room);
+    client.emit(ROOM_STATE, room);
   }
 
-  @SubscribeMessage('move')
+  @SubscribeMessage(MOVE)
   handleMove(@ConnectedSocket() client: Socket, @MessageBody('position') position: number) {
     const room = this.gameService.move(client.id, position);
 
-    this.server.to(room.code).emit('move_made', room);
+    this.server.to(room.code).emit(MOVE_MADE, room);
 
     const isGameFinished: boolean = room.status === ROOM_STATUS_FINISHED;
 
-    if (isGameFinished) this.server.to(room.code).emit('game_over', room);
+    if (isGameFinished) this.server.to(room.code).emit(GAME_OVER, room);
   }
 }

@@ -5,3 +5,15 @@ export {
   WINNING_LINES,
 } from './rules.constant';
 export { ROOM_STATUS_WAITING, ROOM_STATUS_PLAYING, ROOM_STATUS_FINISHED } from './status.constant';
+export {
+  CREATE_ROOM,
+  JOIN_ROOM_WITH_CODE,
+  REJOIN_ROOM,
+  MOVE,
+  ROOM_CREATED,
+  ROOM_JOINED,
+  PLAYER_JOINED,
+  ROOM_STATE,
+  MOVE_MADE,
+  GAME_OVER,
+} from './events.constant';
