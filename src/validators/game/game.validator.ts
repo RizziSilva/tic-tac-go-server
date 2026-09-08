@@ -1,5 +1,11 @@
 import { Room } from '@entities';
-import { BOARD_SIZE, MAX_PLAYERS_PER_ROOM, ROOM_STATUS_PLAYING } from '@constants';
+import {
+  BOARD_SIZE,
+  MAX_PLAYERS_PER_ROOM,
+  PLAYER_NOT_IN_ROOM_ERROR,
+  ROOM_NOT_FOUND_ERROR,
+  ROOM_STATUS_PLAYING,
+} from '@constants';
 import { Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 
@@ -11,11 +17,18 @@ export class GameValidator {
   }
 
   validateRejoinRoom(room: Room | undefined, playerId: string): asserts room is Room {
-    if (!room) throw new WsException('Room not found');
+    if (!room) {
+      throw new WsException({ code: ROOM_NOT_FOUND_ERROR, message: 'Room not found' });
+    }
 
     const player = room.players.find((current) => current.playerId === playerId);
 
-    if (!player) throw new WsException('Player is not in this room');
+    if (!player) {
+      throw new WsException({
+        code: PLAYER_NOT_IN_ROOM_ERROR,
+        message: 'Player is not in this room',
+      });
+    }
   }
 
   validateMove(

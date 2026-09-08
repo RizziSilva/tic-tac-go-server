@@ -5,6 +5,7 @@ export {
   WINNING_LINES,
 } from './rules.constant';
 export { ROOM_STATUS_WAITING, ROOM_STATUS_PLAYING, ROOM_STATUS_FINISHED } from './status.constant';
+export { ROOM_NOT_FOUND_ERROR, PLAYER_NOT_IN_ROOM_ERROR } from './errors.constant';
 export {
   CREATE_ROOM,
   JOIN_ROOM_WITH_CODE,
