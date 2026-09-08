@@ -43,6 +43,6 @@ export class GameValidator {
     if (!isValidPosition) throw new WsException('Invalid board position');
 
     const isPositionOpen = room.board[position] === null;
-    if (isPositionOpen) throw new WsException('Position already taken');
+    if (!isPositionOpen) throw new WsException('Position already taken');
   }
 }
