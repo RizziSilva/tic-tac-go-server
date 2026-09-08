@@ -1,4 +1,4 @@
-import { Room } from '@entities';
+import { Player, Room } from '@entities';
 import { PlayerSymbol } from '@types';
 import { ROOM_STATUS_FINISHED, ROOM_STATUS_PLAYING, WINNING_LINES } from '@constants';
 import { GameValidator } from '@validators';
@@ -11,18 +11,31 @@ export class GameService {
 
   constructor(private readonly gameValidator: GameValidator) {}
 
-  createRoom(hostSocketId: string, isPublic: boolean) {
-    return this.createEmptyRoom(hostSocketId, isPublic);
+  createRoom(hostPlayerId: string, hostSocketId: string, isPublic: boolean) {
+    return this.createEmptyRoom(hostPlayerId, hostSocketId, isPublic);
   }
 
-  joinRoomWithCode(guestSocketId: string, code: string): Room {
+  joinRoomWithCode(guestPlayerId: string, guestSocketId: string, code: string): Room {
     const room: Room | undefined = this.rooms.get(code);
 
     this.gameValidator.validateJoinRoomWithCode(room);
 
-    room.players.push({ socketId: guestSocketId, symbol: 'O' });
+    room.players.push({ playerId: guestPlayerId, socketId: guestSocketId, symbol: 'O' });
     this.roomsSockets.set(guestSocketId, code);
     room.status = ROOM_STATUS_PLAYING;
+
+    return room;
+  }
+
+  rejoinRoom(playerId: string, socketId: string, code: string): Room {
+    const room: Room | undefined = this.rooms.get(code);
+
+    this.gameValidator.validateRejoinRoom(room, playerId);
+
+    const player = room.players.find((current) => current.playerId === playerId) as Player;
+
+    player.socketId = socketId;
+    this.roomsSockets.set(socketId, code);
 
     return room;
   }
@@ -64,9 +77,9 @@ export class GameService {
     return WINNING_LINES.some((line) => line.every((cell) => room.board[cell] === symbol));
   }
 
-  private createEmptyRoom(hostSocketId: string, isPublic: boolean) {
+  private createEmptyRoom(hostPlayerId: string, hostSocketId: string, isPublic: boolean) {
     const randomCode: string = this.generateRandomCode();
-    const room: Room = new Room(randomCode, hostSocketId, isPublic);
+    const room: Room = new Room(randomCode, hostPlayerId, hostSocketId, isPublic);
 
     this.rooms.set(randomCode, room);
     this.roomsSockets.set(hostSocketId, randomCode);

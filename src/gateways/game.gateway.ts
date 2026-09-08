@@ -17,8 +17,11 @@ export class GameGateway {
   constructor(private readonly gameService: GameService) {}
 
   @SubscribeMessage('create_room')
-  async handleCreateRoom(@ConnectedSocket() client: Socket) {
-    const room = this.gameService.createRoom(client.id, false);
+  async handleCreateRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody('playerId') playerId: string,
+  ) {
+    const room = this.gameService.createRoom(playerId, client.id, false);
     await client.join(room.code);
     client.emit('room_created', room);
   }
@@ -26,12 +29,24 @@ export class GameGateway {
   @SubscribeMessage('join_room_with_code')
   async handleJoinRoomWithCode(
     @ConnectedSocket() client: Socket,
+    @MessageBody('playerId') playerId: string,
     @MessageBody('code') code: string,
   ) {
-    const room = this.gameService.joinRoomWithCode(client.id, code);
+    const room = this.gameService.joinRoomWithCode(playerId, client.id, code);
     await client.join(room.code);
     client.emit('room_joined', room);
     client.to(room.code).emit('player_joined', room);
+  }
+
+  @SubscribeMessage('rejoin_room')
+  async handleRejoinRoom(
+    @ConnectedSocket() client: Socket,
+    @MessageBody('playerId') playerId: string,
+    @MessageBody('code') code: string,
+  ) {
+    const room = this.gameService.rejoinRoom(playerId, client.id, code);
+    await client.join(room.code);
+    client.emit('room_state', room);
   }
 
   @SubscribeMessage('move')
