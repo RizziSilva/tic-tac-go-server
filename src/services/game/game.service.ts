@@ -11,16 +11,34 @@ export class GameService {
 
   constructor(private readonly gameValidator: GameValidator) {}
 
-  createRoom(hostPlayerId: string, hostSocketId: string, isPublic: boolean) {
-    return this.createEmptyRoom(hostPlayerId, hostSocketId, isPublic);
+  createRoom(
+    hostPlayerId: string,
+    hostSocketId: string,
+    hostName: string,
+    hostImageUrl: string,
+    isPublic: boolean,
+  ) {
+    return this.createEmptyRoom(hostPlayerId, hostSocketId, hostName, hostImageUrl, isPublic);
   }
 
-  joinRoomWithCode(guestPlayerId: string, guestSocketId: string, code: string): Room {
+  joinRoomWithCode(
+    guestPlayerId: string,
+    guestSocketId: string,
+    guestName: string,
+    guestImageUrl: string,
+    code: string,
+  ): Room {
     const room: Room | undefined = this.rooms.get(code);
 
     this.gameValidator.validateJoinRoomWithCode(room);
 
-    room.players.push({ playerId: guestPlayerId, socketId: guestSocketId, symbol: 'O' });
+    room.players.push({
+      playerId: guestPlayerId,
+      socketId: guestSocketId,
+      symbol: 'O',
+      name: guestName,
+      imageUrl: guestImageUrl,
+    });
     this.roomsSockets.set(guestSocketId, code);
     room.status = ROOM_STATUS_PLAYING;
 
@@ -77,9 +95,22 @@ export class GameService {
     return WINNING_LINES.some((line) => line.every((cell) => room.board[cell] === symbol));
   }
 
-  private createEmptyRoom(hostPlayerId: string, hostSocketId: string, isPublic: boolean) {
+  private createEmptyRoom(
+    hostPlayerId: string,
+    hostSocketId: string,
+    hostName: string,
+    hostImageUrl: string,
+    isPublic: boolean,
+  ) {
     const randomCode: string = this.generateRandomCode();
-    const room: Room = new Room(randomCode, hostPlayerId, hostSocketId, isPublic);
+    const room: Room = new Room(
+      randomCode,
+      hostPlayerId,
+      hostSocketId,
+      hostName,
+      hostImageUrl,
+      isPublic,
+    );
 
     this.rooms.set(randomCode, room);
     this.roomsSockets.set(hostSocketId, randomCode);

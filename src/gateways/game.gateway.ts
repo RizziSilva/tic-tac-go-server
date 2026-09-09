@@ -32,8 +32,10 @@ export class GameGateway {
   async handleCreateRoom(
     @ConnectedSocket() client: Socket,
     @MessageBody('playerId') playerId: string,
+    @MessageBody('name') name: string,
+    @MessageBody('imageUrl') imageUrl: string,
   ) {
-    const room = this.gameService.createRoom(playerId, client.id, false);
+    const room = this.gameService.createRoom(playerId, client.id, name, imageUrl, false);
     await client.join(room.code);
     client.emit(ROOM_CREATED, room);
   }
@@ -42,9 +44,11 @@ export class GameGateway {
   async handleJoinRoomWithCode(
     @ConnectedSocket() client: Socket,
     @MessageBody('playerId') playerId: string,
+    @MessageBody('name') name: string,
+    @MessageBody('imageUrl') imageUrl: string,
     @MessageBody('code') code: string,
   ) {
-    const room = this.gameService.joinRoomWithCode(playerId, client.id, code);
+    const room = this.gameService.joinRoomWithCode(playerId, client.id, name, imageUrl, code);
     await client.join(room.code);
     client.emit(ROOM_JOINED, room);
     client.to(room.code).emit(PLAYER_JOINED, room);
