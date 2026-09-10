@@ -14,9 +14,22 @@ export class Room {
   winner: PlayerSymbol | null = null;
   board: (PlayerSymbol | null)[] = Array<PlayerSymbol | null>(BOARD_SIZE).fill(null);
 
-  constructor(code: string, hostPlayerId: string, hostSocketId: string, isPublic: boolean) {
+  constructor(
+    code: string,
+    hostPlayerId: string,
+    hostSocketId: string,
+    hostName: string,
+    hostImageUrl: string,
+    isPublic: boolean,
+  ) {
     this.code = code;
     this.isPublic = isPublic;
-    this.players.push({ playerId: hostPlayerId, socketId: hostSocketId, symbol: 'X' });
+    this.players.push({
+      playerId: hostPlayerId,
+      socketId: hostSocketId,
+      symbol: 'X',
+      name: hostName,
+      imageUrl: hostImageUrl,
+    });
   }
 }
