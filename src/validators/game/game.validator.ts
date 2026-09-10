@@ -12,7 +12,9 @@ import { WsException } from '@nestjs/websockets';
 @Injectable()
 export class GameValidator {
   validateJoinRoomWithCode(room: Room | undefined): asserts room is Room {
-    if (!room) throw new WsException('Room not found');
+    if (!room) {
+      throw new WsException({ code: ROOM_NOT_FOUND_ERROR, message: 'Room not found' });
+    }
     if (room.players.length >= MAX_PLAYERS_PER_ROOM) throw new WsException('Room is full');
   }
 
@@ -36,7 +38,9 @@ export class GameValidator {
     playerSocketId: string,
     position: number,
   ): asserts room is Room {
-    if (!room) throw new WsException('Room not found');
+    if (!room) {
+      throw new WsException({ code: ROOM_NOT_FOUND_ERROR, message: 'Room not found' });
+    }
 
     const isGameInProgress = room.status === ROOM_STATUS_PLAYING;
 
