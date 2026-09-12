@@ -12,14 +12,13 @@ import { WsException } from '@nestjs/websockets';
 @Injectable()
 export class GameValidator {
   validateJoinRoomWithCode(room: Room | undefined): asserts room is Room {
-    if (!room) throw new WsException('Room not found');
+    this.validateRoom(room);
+
     if (room.players.length >= MAX_PLAYERS_PER_ROOM) throw new WsException('Room is full');
   }
 
   validateRejoinRoom(room: Room | undefined, playerId: string): asserts room is Room {
-    if (!room) {
-      throw new WsException({ code: ROOM_NOT_FOUND_ERROR, message: 'Room not found' });
-    }
+    this.validateRoom(room);
 
     const player = room.players.find((current) => current.playerId === playerId);
 
@@ -31,12 +30,20 @@ export class GameValidator {
     }
   }
 
+  validateLeaveRoom(room: Room | undefined, playerSocketId: string): asserts room is Room {
+    this.validateRoom(room);
+
+    const player = room.players.find((current) => current.socketId === playerSocketId);
+
+    if (!player) throw new WsException('Player is not in this room');
+  }
+
   validateMove(
     room: Room | undefined,
     playerSocketId: string,
     position: number,
   ): asserts room is Room {
-    if (!room) throw new WsException('Room not found');
+    this.validateRoom(room);
 
     const isGameInProgress = room.status === ROOM_STATUS_PLAYING;
 
@@ -57,5 +64,9 @@ export class GameValidator {
 
     const isPositionOpen = room.board[position] === null;
     if (!isPositionOpen) throw new WsException('Position already taken');
+  }
+
+  private validateRoom(room: Room | undefined): asserts room is Room {
+    if (!room) throw new WsException('Room not found');
   }
 }

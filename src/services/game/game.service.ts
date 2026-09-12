@@ -58,6 +58,29 @@ export class GameService {
     return room;
   }
 
+  leaveRoom(playerSocketId: string): { code: string; room: Room | null } {
+    const code: string | undefined = this.roomsSockets.get(playerSocketId);
+    const room: Room | undefined = code ? this.rooms.get(code) : undefined;
+
+    this.gameValidator.validateLeaveRoom(room, playerSocketId);
+
+    room.players = room.players.filter((current) => current.socketId !== playerSocketId);
+    this.roomsSockets.delete(playerSocketId);
+
+    if (room.players.length === 0) {
+      this.rooms.delete(room.code);
+
+      return { code: room.code, room: null };
+    }
+
+    const remainingPlayer = room.players[0] as Player;
+
+    room.status = ROOM_STATUS_FINISHED;
+    room.winner = remainingPlayer.symbol;
+
+    return { code: room.code, room };
+  }
+
   move(playerSocketId: string, position: number): Room {
     const code: string | undefined = this.roomsSockets.get(playerSocketId);
     const room: Room | undefined = code ? this.rooms.get(code) : undefined;
