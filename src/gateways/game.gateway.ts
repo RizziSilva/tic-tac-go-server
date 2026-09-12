@@ -10,6 +10,7 @@ import {
   CREATE_ROOM,
   GAME_OVER,
   JOIN_ROOM_WITH_CODE,
+  LEAVE_ROOM,
   MOVE,
   MOVE_MADE,
   PLAYER_JOINED,
@@ -63,6 +64,15 @@ export class GameGateway {
     const room = this.gameService.rejoinRoom(playerId, client.id, code);
     await client.join(room.code);
     client.emit(ROOM_STATE, room);
+  }
+
+  @SubscribeMessage(LEAVE_ROOM)
+  async handleLeaveRoom(@ConnectedSocket() client: Socket) {
+    const { code, room } = this.gameService.leaveRoom(client.id);
+
+    if (room) this.server.to(code).emit(GAME_OVER, room);
+
+    await client.leave(code);
   }
 
   @SubscribeMessage(MOVE)

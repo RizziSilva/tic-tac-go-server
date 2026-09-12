@@ -6,6 +6,8 @@ export const REJOIN_ROOM = 'rejoin_room';
 
 export const MOVE = 'move';
 
+export const LEAVE_ROOM = 'leave_room';
+
 export const ROOM_CREATED = 'room_created';
 
 export const ROOM_JOINED = 'room_joined';
