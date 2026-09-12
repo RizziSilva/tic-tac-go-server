@@ -1,13 +1,24 @@
 import { Player, Room } from '@entities';
 import { PlayerSymbol } from '@types';
-import { ROOM_STATUS_FINISHED, ROOM_STATUS_PLAYING, WINNING_LINES } from '@constants';
+import {
+  DISCONNECT_GRACE_PERIOD_MS,
+  GAME_OVER,
+  OPPONENT_DISCONNECTED,
+  OPPONENT_RECONNECTED,
+  ROOM_STATUS_FINISHED,
+  ROOM_STATUS_PLAYING,
+  WINNING_LINES,
+} from '@constants';
 import { GameValidator } from '@validators';
 import { Injectable } from '@nestjs/common';
+import { EventEmitter } from 'events';
 
 @Injectable()
 export class GameService {
+  readonly events = new EventEmitter();
   private rooms = new Map<string, Room>();
   private roomsSockets = new Map<string, string>();
+  private disconnectTimers = new Map<string, NodeJS.Timeout>();
 
   constructor(private readonly gameValidator: GameValidator) {}
 
@@ -55,30 +66,92 @@ export class GameService {
     player.socketId = socketId;
     this.roomsSockets.set(socketId, code);
 
+    if (this.cancelDisconnectTimer(playerId)) {
+      this.events.emit(OPPONENT_RECONNECTED, { code: room.code, room });
+    }
+
     return room;
   }
 
-  leaveRoom(playerSocketId: string): { code: string; room: Room | null } {
+  leaveRoom(playerSocketId: string): string {
     const code: string | undefined = this.roomsSockets.get(playerSocketId);
     const room: Room | undefined = code ? this.rooms.get(code) : undefined;
 
     this.gameValidator.validateLeaveRoom(room, playerSocketId);
 
+    this.removePlayerFromRoom(room, playerSocketId);
+
+    return room.code;
+  }
+
+  handleSocketDisconnect(playerSocketId: string): void {
+    const code: string | undefined = this.roomsSockets.get(playerSocketId);
+    const room: Room | undefined = code ? this.rooms.get(code) : undefined;
+
+    if (!room) return;
+
+    const player = room.players.find((current) => current.socketId === playerSocketId);
+
+    if (!player) return;
+
+    this.roomsSockets.delete(playerSocketId);
+
+    const timer = setTimeout(() => {
+      this.disconnectTimers.delete(player.playerId);
+      this.finalizeDisconnect(room.code, player.playerId, playerSocketId);
+    }, DISCONNECT_GRACE_PERIOD_MS);
+
+    this.disconnectTimers.set(player.playerId, timer);
+
+    if (room.players.length > 1) {
+      this.events.emit(OPPONENT_DISCONNECTED, { code: room.code, room });
+    }
+  }
+
+  private finalizeDisconnect(code: string, playerId: string, disconnectedSocketId: string) {
+    const room: Room | undefined = this.rooms.get(code);
+
+    if (!room) return;
+
+    const player = room.players.find((current) => current.playerId === playerId);
+    const hasReconnected = !player || player.socketId !== disconnectedSocketId;
+
+    if (hasReconnected) return;
+
+    this.removePlayerFromRoom(room, disconnectedSocketId);
+  }
+
+  private cancelDisconnectTimer(playerId: string): boolean {
+    const timer = this.disconnectTimers.get(playerId);
+
+    if (!timer) return false;
+
+    clearTimeout(timer);
+    this.disconnectTimers.delete(playerId);
+
+    return true;
+  }
+
+  private removePlayerFromRoom(room: Room, playerSocketId: string): void {
     room.players = room.players.filter((current) => current.socketId !== playerSocketId);
     this.roomsSockets.delete(playerSocketId);
 
     if (room.players.length === 0) {
       this.rooms.delete(room.code);
 
-      return { code: room.code, room: null };
+      return;
     }
 
-    const remainingPlayer = room.players[0] as Player;
+    const isGameAlreadyFinished = room.status === ROOM_STATUS_FINISHED;
 
-    room.status = ROOM_STATUS_FINISHED;
-    room.winner = remainingPlayer.symbol;
+    if (!isGameAlreadyFinished) {
+      const remainingPlayer = room.players[0] as Player;
 
-    return { code: room.code, room };
+      room.status = ROOM_STATUS_FINISHED;
+      room.winner = remainingPlayer.symbol;
+    }
+
+    this.events.emit(GAME_OVER, { code: room.code, room });
   }
 
   move(playerSocketId: string, position: number): Room {

@@ -19,3 +19,7 @@ export const ROOM_STATE = 'room_state';
 export const MOVE_MADE = 'move_made';
 
 export const GAME_OVER = 'game_over';
+
+export const OPPONENT_DISCONNECTED = 'opponent_disconnected';
+
+export const OPPONENT_RECONNECTED = 'opponent_reconnected';
