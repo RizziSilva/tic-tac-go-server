@@ -75,9 +75,11 @@ export class GameGateway implements OnGatewayDisconnect {
     @MessageBody('playerId') playerId: string,
     @MessageBody('code') code: string,
   ) {
+    await client.join(code);
+
     const room = this.gameService.rejoinRoom(playerId, client.id, code);
-    await client.join(room.code);
-    client.emit(ROOM_STATE, room);
+
+    this.server.to(room.code).emit(ROOM_STATE, room);
   }
 
   @SubscribeMessage(LEAVE_ROOM)

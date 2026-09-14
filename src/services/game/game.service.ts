@@ -145,7 +145,7 @@ export class GameService {
     const isGameAlreadyFinished = room.status === ROOM_STATUS_FINISHED;
 
     if (!isGameAlreadyFinished) {
-      const remainingPlayer = room.players[0] as Player;
+      const remainingPlayer = room.players[0];
 
       room.status = ROOM_STATUS_FINISHED;
       room.winner = remainingPlayer.symbol;
