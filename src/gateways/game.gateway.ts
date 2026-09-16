@@ -1,11 +1,13 @@
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { Room } from '@entities';
 import {
   CREATE_ROOM,
   GAME_OVER,
@@ -13,6 +15,8 @@ import {
   LEAVE_ROOM,
   MOVE,
   MOVE_MADE,
+  OPPONENT_DISCONNECTED,
+  OPPONENT_RECONNECTED,
   PLAYER_JOINED,
   REJOIN_ROOM,
   ROOM_CREATED,
@@ -23,11 +27,21 @@ import {
 import { GameService } from '@services';
 
 @WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
-export class GameGateway {
+export class GameGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
-  constructor(private readonly gameService: GameService) {}
+  constructor(private readonly gameService: GameService) {
+    [GAME_OVER, OPPONENT_DISCONNECTED, OPPONENT_RECONNECTED].forEach((event) => {
+      this.gameService.events.on(event, ({ code, room }: { code: string; room: Room }) => {
+        this.server.to(code).emit(event, room);
+      });
+    });
+  }
+
+  handleDisconnect(client: Socket) {
+    this.gameService.handleSocketDisconnect(client.id);
+  }
 
   @SubscribeMessage(CREATE_ROOM)
   async handleCreateRoom(
@@ -61,16 +75,16 @@ export class GameGateway {
     @MessageBody('playerId') playerId: string,
     @MessageBody('code') code: string,
   ) {
+    await client.join(code);
+
     const room = this.gameService.rejoinRoom(playerId, client.id, code);
-    await client.join(room.code);
-    client.emit(ROOM_STATE, room);
+
+    this.server.to(room.code).emit(ROOM_STATE, room);
   }
 
   @SubscribeMessage(LEAVE_ROOM)
   async handleLeaveRoom(@ConnectedSocket() client: Socket) {
-    const { code, room } = this.gameService.leaveRoom(client.id);
-
-    if (room) this.server.to(code).emit(GAME_OVER, room);
+    const code = this.gameService.leaveRoom(client.id);
 
     await client.leave(code);
   }

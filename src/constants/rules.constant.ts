@@ -2,6 +2,8 @@ export const MAX_PIECES_PER_PLAYER: number = 3;
 
 export const MAX_PLAYERS_PER_ROOM: number = 2;
 
+export const DISCONNECT_GRACE_PERIOD_MS: number = 20000;
+
 export const BOARD_SIZE: number = 9;
 
 export const WINNING_LINES: number[][] = [

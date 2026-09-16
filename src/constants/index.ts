@@ -3,6 +3,7 @@ export {
   MAX_PLAYERS_PER_ROOM,
   BOARD_SIZE,
   WINNING_LINES,
+  DISCONNECT_GRACE_PERIOD_MS,
 } from './rules.constant';
 export { ROOM_STATUS_WAITING, ROOM_STATUS_PLAYING, ROOM_STATUS_FINISHED } from './status.constant';
 export { ROOM_NOT_FOUND_ERROR, PLAYER_NOT_IN_ROOM_ERROR } from './errors.constant';
@@ -18,4 +19,6 @@ export {
   ROOM_STATE,
   MOVE_MADE,
   GAME_OVER,
+  OPPONENT_DISCONNECTED,
+  OPPONENT_RECONNECTED,
 } from './events.constant';
