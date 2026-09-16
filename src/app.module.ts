@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { GameModule } from '@modules';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [GameModule],
+  imports: [ConfigModule.forRoot(), GameModule],
   controllers: [],
   providers: [],
 })
