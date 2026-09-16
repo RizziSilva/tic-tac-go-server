@@ -26,7 +26,7 @@ import {
 } from '@constants';
 import { GameService } from '@services';
 
-@WebSocketGateway({ cors: { origin: 'http://localhost:5173' } })
+@WebSocketGateway({ cors: { origin: process.env.FRONTEND_URL ?? 'http://localhost:5173' } })
 export class GameGateway implements OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
