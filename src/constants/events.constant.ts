@@ -23,3 +23,13 @@ export const GAME_OVER = 'game_over';
 export const OPPONENT_DISCONNECTED = 'opponent_disconnected';
 
 export const OPPONENT_RECONNECTED = 'opponent_reconnected';
+
+export const REQUEST_REMATCH = 'request_rematch';
+
+export const DECLINE_REMATCH = 'decline_rematch';
+
+export const REMATCH_REQUESTED = 'rematch_requested';
+
+export const REMATCH_STARTED = 'rematch_started';
+
+export const REMATCH_DECLINED = 'rematch_declined';

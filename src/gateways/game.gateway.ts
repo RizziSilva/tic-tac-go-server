@@ -19,10 +19,16 @@ import {
   OPPONENT_RECONNECTED,
   PLAYER_JOINED,
   REJOIN_ROOM,
+  REMATCH_DECLINED,
+  REMATCH_REQUESTED,
+  REMATCH_STARTED,
+  REQUEST_REMATCH,
+  DECLINE_REMATCH,
   ROOM_CREATED,
   ROOM_JOINED,
   ROOM_STATE,
   ROOM_STATUS_FINISHED,
+  ROOM_STATUS_PLAYING,
 } from '@constants';
 import { GameService } from '@services';
 
@@ -87,6 +93,21 @@ export class GameGateway implements OnGatewayDisconnect {
     const code = this.gameService.leaveRoom(client.id);
 
     await client.leave(code);
+  }
+
+  @SubscribeMessage(REQUEST_REMATCH)
+  handleRequestRematch(@ConnectedSocket() client: Socket) {
+    const room = this.gameService.requestRematch(client.id);
+    const hasRematchStarted: boolean = room.status === ROOM_STATUS_PLAYING;
+
+    this.server.to(room.code).emit(hasRematchStarted ? REMATCH_STARTED : REMATCH_REQUESTED, room);
+  }
+
+  @SubscribeMessage(DECLINE_REMATCH)
+  handleDeclineRematch(@ConnectedSocket() client: Socket) {
+    const room = this.gameService.declineRematch(client.id);
+
+    this.server.to(room.code).emit(REMATCH_DECLINED, room);
   }
 
   @SubscribeMessage(MOVE)

@@ -4,6 +4,7 @@ import {
   MAX_PLAYERS_PER_ROOM,
   PLAYER_NOT_IN_ROOM_ERROR,
   ROOM_NOT_FOUND_ERROR,
+  ROOM_STATUS_FINISHED,
   ROOM_STATUS_PLAYING,
 } from '@constants';
 import { Injectable } from '@nestjs/common';
@@ -36,6 +37,18 @@ export class GameValidator {
     const player = room.players.find((current) => current.socketId === playerSocketId);
 
     if (!player) throw new WsException('Player is not in this room');
+  }
+
+  validateRematch(room: Room | undefined, playerSocketId: string): asserts room is Room {
+    this.validateRoom(room);
+
+    if (room.status !== ROOM_STATUS_FINISHED) throw new WsException('Game is not finished');
+
+    const player = room.players.find((current) => current.socketId === playerSocketId);
+
+    if (!player) throw new WsException('Player is not in this room');
+
+    if (room.players.length < MAX_PLAYERS_PER_ROOM) throw new WsException('Opponent left the room');
   }
 
   validateMove(
