@@ -10,9 +10,11 @@ export class Room {
   status: RoomStatus = ROOM_STATUS_WAITING;
   players: Player[] = [];
   moveQueues: Record<PlayerSymbol, number[]> = { X: [], O: [] };
+  startingSymbol: PlayerSymbol = 'X';
   currentTurn: PlayerSymbol = 'X';
   winner: PlayerSymbol | null = null;
   board: (PlayerSymbol | null)[] = Array<PlayerSymbol | null>(BOARD_SIZE).fill(null);
+  rematchRequests: string[] = [];
 
   constructor(
     code: string,

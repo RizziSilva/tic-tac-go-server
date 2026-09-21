@@ -135,6 +135,7 @@ export class GameService {
   private removePlayerFromRoom(room: Room, playerSocketId: string): void {
     room.players = room.players.filter((current) => current.socketId !== playerSocketId);
     this.roomsSockets.delete(playerSocketId);
+    room.rematchRequests = [];
 
     if (room.players.length === 0) {
       this.rooms.delete(room.code);
@@ -172,6 +173,52 @@ export class GameService {
     }
 
     return room;
+  }
+
+  requestRematch(playerSocketId: string): Room {
+    const room = this.getRoomBySocket(playerSocketId);
+
+    this.gameValidator.validateRematch(room, playerSocketId);
+
+    const player = room.players.find((current) => current.socketId === playerSocketId) as Player;
+
+    if (!room.rematchRequests.includes(player.playerId)) {
+      room.rematchRequests.push(player.playerId);
+    }
+
+    const bothWantRematch = room.players.every((current) =>
+      room.rematchRequests.includes(current.playerId),
+    );
+
+    if (bothWantRematch) this.resetRoomForRematch(room);
+
+    return room;
+  }
+
+  declineRematch(playerSocketId: string): Room {
+    const room = this.getRoomBySocket(playerSocketId);
+
+    this.gameValidator.validateRematch(room, playerSocketId);
+
+    room.rematchRequests = [];
+
+    return room;
+  }
+
+  private getRoomBySocket(playerSocketId: string): Room | undefined {
+    const code: string | undefined = this.roomsSockets.get(playerSocketId);
+
+    return code ? this.rooms.get(code) : undefined;
+  }
+
+  private resetRoomForRematch(room: Room): void {
+    room.startingSymbol = room.startingSymbol === 'X' ? 'O' : 'X';
+    room.board.fill(null);
+    room.moveQueues = { X: [], O: [] };
+    room.currentTurn = room.startingSymbol;
+    room.winner = null;
+    room.rematchRequests = [];
+    room.status = ROOM_STATUS_PLAYING;
   }
 
   private placePiece(room: Room, symbol: PlayerSymbol, position: number) {
